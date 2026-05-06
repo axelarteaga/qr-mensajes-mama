@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para Mamá 💖</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.card {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    max-width: 350px;
+    width: 90%;
+}
+
+.btn {
+    background: #ff4b6e;
+    border: none;
+    padding: 12px 20px;
+    color: white;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.progress {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 10px;
+    margin-top: 20px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #ff1f4b;
+    transition: width 0.1s;
+}
+
+.time {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.heart {
+    font-size: 30px;
+    animation: latido 1s infinite;
+}
+
+@keyframes latido {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.confetti {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    animation: caer linear forwards;
+}
+
+@keyframes caer {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    color: #333;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    animation: aparecer 0.5s ease;
+}
+
+.modal-content h2 {
+    color: #ff4b6e;
+}
+
+.modal-content button {
+    margin-top: 15px;
+    padding: 10px 15px;
+    border: none;
+    background: #ff4b6e;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+@keyframes aparecer {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <div class="heart">💖</div>
+    <h1>Feliz Día Mamá</h1>
+    <p>🎁 Toca el botón para escuchar tu sorpresa 🎶</p>
+
+    <button class="btn" onclick="toggleAudio()" id="btnAudio">
+        ▶️ Escuchar Mensaje
+    </button>
+
+    <div class="progress" onclick="seek(event)" id="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="time">
+        <span id="current">00:00</span> / <span id="duration">00:00</span>
+    </div>
+
+    <audio id="audio">
+        <source src="audios/yael.mp3" type="audio/mpeg">
+    </audio>
+</div>
+
+<div id="modalFinal" class="modal">
+    <div class="modal-content">
+        <h2>💖 FELIZ DÍA MAMÁ 💖</h2>
+        <p>Gracias por todo lo que haces</p>
+        <button onclick="cerrarModal()">Cerrar</button>
+    </div>
+</div>
+
+<script>
+const audio = document.getElementById("audio");
+const btn = document.getElementById("btnAudio");
+const progressBar = document.getElementById("progressBar");
+const progress = document.getElementById("progress");
+const current = document.getElementById("current");
+const duration = document.getElementById("duration");
+
+let dragging = false;
+
+function toggleAudio() {
+    if (audio.paused) {
+        audio.play();
+    } else {
+        audio.pause();
+    }
+}
+
+audio.addEventListener("timeupdate", () => {
+    if (!dragging && audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = percent + "%";
+        current.textContent = formatTime(audio.currentTime);
+    }
+});
+
+audio.addEventListener("loadedmetadata", () => {
+    duration.textContent = formatTime(audio.duration);
+});
+
+function seek(e) {
+    const rect = progress.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = x / rect.width;
+    audio.currentTime = percent * audio.duration;
+}
+
+progress.addEventListener("touchstart", () => dragging = true);
+
+progress.addEventListener("touchmove", (e) => {
+    if (!audio.duration) return;
+    const rect = progress.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
+    const percent = Math.max(0, Math.min(1, x / rect.width));
+    progressBar.style.width = (percent * 100) + "%";
+    current.textContent = formatTime(percent * audio.duration);
+});
+
+progress.addEventListener("touchend", (e) => {
+    if (!audio.duration) return;
+    const rect = progress.getBoundingClientRect();
+    const x = e.changedTouches[0].clientX - rect.left;
+    const percent = Math.max(0, Math.min(1, x / rect.width));
+    audio.currentTime = percent * audio.duration;
+    dragging = false;
+});
+
+audio.onplay = () => {
+    btn.innerHTML = "⏸️ Pausar Mensaje";
+};
+
+audio.onpause = () => {
+    btn.innerHTML = "▶️ Escuchar Mensaje";
+};
+
+audio.onended = () => {
+    btn.innerHTML = "▶️ Volver a reproducir";
+    lanzarConfeti();
+    mostrarModal();
+};
+
+function lanzarConfeti() {
+    for (let i = 0; i < 180; i++) {
+        const confetti = document.createElement("div");
+        confetti.classList.add("confetti");
+        confetti.style.left = Math.random() * 100 + "vw";
+        confetti.style.backgroundColor = coloresRandom();
+        confetti.style.width = (5 + Math.random() * 8) + "px";
+        confetti.style.height = confetti.style.width;
+        confetti.style.animationDuration = (2 + Math.random() * 2) + "s";
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 4000);
+    }
+}
+
+function coloresRandom() {
+    const colores = ["#ff4b6e", "#ffd700", "#00eaff", "#7dff7d", "#ffffff"];
+    return colores[Math.floor(Math.random() * colores.length)];
+}
+
+function mostrarModal() {
+    document.getElementById("modalFinal").style.display = "flex";
+}
+
+function cerrarModal() {
+    document.getElementById("modalFinal").style.display = "none";
+}
+
+function formatTime(sec) {
+    const min = Math.floor(sec / 60) || 0;
+    const s = Math.floor(sec % 60) || 0;
+    return `${min}:${s < 10 ? "0" : ""}${s}`;
+}
+</script>
+
+</body>
+</html>
